@@ -3,356 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ISOSTAR 3D - PLANOGRAMME RESPONSIF MULTI-FORMATS v8.0</title>
+    <title>ISOSTAR 3D MASTER - SIMULATEUR MERCHANDISING NATIONAL v9.0</title>
     <style>
         :root {
-            --isostar-yellow: #ffde00;
-            --intersport-blue: #004179;
-            --intersport-red: #ce0f2d;
-            --bg-color: #f4f7f9;
-            --panel-bg: rgba(255, 255, 255, 0.98);
-            --transition-smooth: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            --iso-yellow: #ffde00; /* Identité Visuelle Isostar */
+            --inter-blue: #004179; /* Identité Visuelle Intersport */
+            --inter-red: #ce0f2d;  /* Identité Visuelle Promotionnelle */
+            --ui-white: rgba(255, 255, 255, 0.98);
+            --ui-dark: #0f172a;
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --shadow-pro: 0 25px 60px -15px rgba(0, 0, 0, 0.3);
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* --- RÉGLAGES STRUCTURELS --- */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: var(--font-main); background-color: #000; }
+        canvas { display: block; outline: none; }
 
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background-color: var(--bg-color);
-            height: 100vh;
+        /* --- LOADER SYSTÈME --- */
+        #master-loader { position: fixed; inset: 0; background: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.8s ease-out; }
+        .loading-bar-container { width: 240px; height: 4px; background: #eee; border-radius: 10px; margin-top: 25px; overflow: hidden; }
+        .loading-bar-fill { width: 0%; height: 100%; background: var(--iso-yellow); animation: load-anim 2s forwards cubic-bezier(0.65, 0, 0.35, 1); }
+        @keyframes load-anim { to { width: 100%; } }
+        @keyframes spin-iso { to { transform: rotate(360deg); } }
+        .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid var(--iso-yellow); border-radius: 50%; animation: spin-iso 1s infinite linear; }
+
+        /* --- INTERFACE RESPONSIVE GAUCHE (DASHBOARD) --- */
+        #ui-left-panel {
+            position: absolute; top: 20px; left: 20px; bottom: 20px;
+            width: 340px; background: var(--ui-white); border-radius: var(--radius-xl);
+            display: flex; flex-direction: column; z-index: 100; box-shadow: var(--shadow-pro);
+            border-left: 8px solid var(--iso-yellow); transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        /* ========================================================================
-           RESPONSIVE UI : PANNEAU GAUCHE (CONTROLES ET CATALOGUE)
-           ======================================================================== */
-        #ui-left {
-            position: absolute; 
-            top: 15px; left: 15px; bottom: 15px;
-            background: var(--panel-bg);
-            padding: 20px; 
-            border-radius: 16px;
-            border-left: 6px solid var(--isostar-yellow); 
-            width: 320px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            display: flex; 
-            flex-direction: column; 
-            z-index: 1000;
-            transition: var(--transition-smooth);
-            backdrop-filter: blur(10px);
+        .ui-header { padding: 30px; border-bottom: 1px solid #f1f5f9; background: linear-gradient(135deg, #fff, #f8fafc); border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+        .ui-title { font-size: 28px; font-weight: 900; text-transform: uppercase; color: #000; margin: 0; letter-spacing: -1px; }
+        .ui-version { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 3px; display: block; margin-top: 5px; }
+
+        .ui-controls { padding: 25px 30px; }
+        .control-label { font-size: 11px; font-weight: 900; color: var(--inter-blue); text-transform: uppercase; margin-bottom: 10px; display: block; }
+        
+        select {
+            width: 100%; padding: 16px; border: 2px solid #e2e8f0; border-radius: var(--radius-lg);
+            background: #fff; color: var(--inter-blue); font-weight: 700; cursor: pointer; outline: none;
+            transition: all 0.3s; font-size: 14px;
+        }
+        select:hover { border-color: var(--iso-yellow); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+        #catalog-scroll-area { flex-grow: 1; overflow-y: auto; padding: 10px 30px 30px 30px; }
+        .catalog-header-text { font-size: 13px; font-weight: 900; color: var(--inter-blue); text-transform: uppercase; margin: 15px 0; border-bottom: 3px solid var(--iso-yellow); padding-bottom: 8px; }
+
+        .nav-item {
+            display: flex; align-items: center; padding: 14px; margin-bottom: 10px;
+            background: #f8fafc; border-radius: var(--radius-lg); cursor: pointer;
+            transition: all 0.3s; border: 1px solid transparent;
+        }
+        .nav-item:hover { transform: scale(1.03) translateX(10px); border-color: var(--iso-yellow); background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .nav-item span { font-size: 12px; font-weight: 700; color: #334155; line-height: 1.3; }
+
+        /* --- INTERFACE RESPONSIVE DROITE (MODALE FOCUS) --- */
+        #ui-product-modal {
+            position: absolute; top: 20px; right: 20px; bottom: 20px;
+            width: 420px; background: #fff; border-radius: var(--radius-xl);
+            display: flex; flex-direction: column; z-index: 110; box-shadow: var(--shadow-pro);
+            border-top: 12px solid var(--inter-blue); transform: translateX(calc(100% + 50px));
+            transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #ui-product-modal.active { transform: translateX(0); }
+
+        .modal-content { padding: 40px; overflow-y: auto; flex-grow: 1; }
+        .pill-cat { background: var(--inter-red); color: #fff; padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 900; display: inline-block; margin-bottom: 20px; text-transform: uppercase; }
+        .prod-name { font-size: 32px; font-weight: 900; color: var(--inter-blue); line-height: 1; margin: 0 0 20px 0; letter-spacing: -1px; }
+        .prod-description { color: #64748b; font-size: 15px; line-height: 1.7; margin-bottom: 35px; }
+
+        .merch-theory-card { 
+            background: #fffbe6; padding: 25px; border-radius: var(--radius-lg); 
+            border-left: 8px solid #fbc02d; position: relative; overflow: hidden;
+        }
+        .merch-theory-card::before { content: 'STRATEGY'; position: absolute; top: -10px; right: -10px; font-size: 40px; font-weight: 900; color: rgba(251, 192, 45, 0.08); }
+
+        /* --- BOUTON DE SORTIE / RESET --- */
+        .btn-system {
+            background: var(--iso-yellow); border: none; padding: 20px; border-radius: var(--radius-lg);
+            width: 100%; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 25px rgba(255, 222, 0, 0.4); font-size: 14px; letter-spacing: 1px;
+        }
+        .btn-system:hover { background: #000; color: #fff; transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
+        #btn-camera-free { background: var(--inter-blue); color: #fff; display: none; margin-top: 25px; box-shadow: 0 8px 25px rgba(0, 65, 121, 0.3); }
+
+        /* --- ADAPTATION MOBILE TOTALE --- */
+        @media (max-width: 1100px) {
+            #ui-left-panel { width: 300px; left: 10px; top: 10px; bottom: 10px; }
+            #ui-product-modal { width: 360px; right: 10px; }
         }
 
-        /* Mobile adaptation pour le panneau gauche */
-        @media (max-width: 768px) {
-            #ui-left {
-                width: 260px;
-                left: 10px; top: 10px; bottom: 10px;
-                padding: 15px;
-            }
-            .brand-title { font-size: 20px !important; }
+        @media (max-width: 850px) {
+            #ui-left-panel { width: calc(100% - 20px); height: auto; bottom: auto; max-height: 40%; }
+            #ui-product-modal { width: calc(100% - 20px); left: 10px; right: 10px; top: auto; height: 65%; transform: translateY(115%); }
+            #ui-product-modal.active { transform: translateY(0); }
+            #catalog-scroll-area { display: none; } /* On cache la liste sur petit mobile pour la visibilité */
+            .ui-header { padding: 15px 25px; }
+            .ui-controls { padding: 15px 25px; }
         }
 
-        @media (max-width: 480px) {
-            #ui-left {
-                width: 100%;
-                left: 0; top: auto; bottom: -70%; /* Escamotable sur mobile */
-                height: 75%;
-                border-radius: 20px 20px 0 0;
-                border-left: none;
-                border-top: 5px solid var(--isostar-yellow);
-            }
-            #ui-left.mobile-active { bottom: 0; }
-        }
-
-        .brand-title { 
-            margin: 0; 
-            font-size: 24px; 
-            font-weight: 900; 
-            color: #000; 
-            text-transform: uppercase;
-            letter-spacing: -0.5px;
-        }
-
-        .project-tag { 
-            font-size: 10px; 
-            color: #888; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        label {
-            font-size: 11px;
-            font-weight: 900;
-            color: var(--intersport-blue);
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        select { 
-            width: 100%; 
-            padding: 12px; 
-            margin-bottom: 20px; 
-            border: 2px solid #edf2f7; 
-            border-radius: 10px; 
-            background: #fff; 
-            font-weight: 700; 
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--intersport-blue);
-            outline: none;
-        }
-        select:focus { border-color: var(--isostar-yellow); }
-
-        #product-nav-header {
-            font-size: 12px;
-            font-weight: 900;
-            color: var(--intersport-blue);
-            margin: 10px 0;
-            padding-bottom: 8px;
-            border-bottom: 3px solid var(--isostar-yellow);
-            text-transform: uppercase;
-        }
-
-        #scrollable-catalog {
-            flex-grow: 1; 
-            overflow-y: auto; 
-            margin-top: 5px;
-            padding-right: 5px;
-        }
-
-        .nav-card {
-            display: flex; 
-            align-items: center; 
-            padding: 12px;
-            cursor: pointer; 
-            border-radius: 10px; 
-            transition: var(--transition-smooth);
-            margin-bottom: 5px;
-            background: #f8fafc;
-            border: 1px solid transparent;
-        }
-        .nav-card:hover { 
-            background: #fff; 
-            border-color: var(--isostar-yellow);
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .nav-card span { 
-            font-size: 12px; 
-            font-weight: 700; 
-            color: #334155;
-            line-height: 1.3;
-        }
-
-        /* ========================================================================
-           RESPONSIVE UI : PANNEAU DROIT (ANALYSE PRODUIT)
-           ======================================================================== */
-        #info-panel-right {
-            position: absolute; 
-            top: 20px; 
-            right: -500px; /* Masqué par défaut */
-            width: 380px; 
-            background: #fff; 
-            padding: 30px;
-            border-radius: 20px; 
-            border-top: 10px solid var(--intersport-blue);
-            box-shadow: -15px 20px 50px rgba(0,0,0,0.2);
-            transition: right 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-            z-index: 1001;
-        }
-        #info-panel-right.active { right: 20px; }
-
-        /* Mobile adaptation pour le panneau droit */
-        @media (max-width: 768px) {
-            #info-panel-right { width: 320px; padding: 20px; }
-            #panel-product-title { font-size: 22px !important; }
-        }
-
-        @media (max-width: 480px) {
-            #info-panel-right {
-                width: 90%;
-                right: 5% !important;
-                left: 5%;
-                top: 50px;
-                bottom: auto;
-            }
-        }
-
-        .badge-cat {
-            background: var(--intersport-red);
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 900;
-            text-transform: uppercase;
-            display: inline-block;
-            margin-bottom: 12px;
-        }
-
-        #panel-product-title { 
-            margin: 0 0 10px 0; 
-            color: var(--intersport-blue); 
-            font-size: 26px; 
-            font-weight: 900; 
-            line-height: 1.1;
-        }
-
-        #panel-product-desc { 
-            font-size: 14px; 
-            color: #4b5563; 
-            line-height: 1.6; 
-            margin-bottom: 25px;
-        }
-
-        .merch-analysis-box {
-            background: #fffbe6; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border-left: 6px solid #fbc02d;
-        }
-
-        .merch-header {
-            font-size: 11px; 
-            color: #92400e; 
-            font-weight: 900; 
-            margin: 0 0 8px 0; 
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* --- BOUTONS --- */
-        .btn-ui {
-            background: var(--isostar-yellow); 
-            color: #000; 
-            border: none; 
-            padding: 16px;
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: 800; 
-            width: 100%; 
-            margin-top: 25px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 13px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(255, 222, 0, 0.3);
-        }
-        .btn-ui:hover { 
-            background: #000; 
-            color: #fff;
-            transform: translateY(-2px);
-        }
-
-        #reset-cam-trigger { 
-            background: var(--intersport-blue); 
-            color: #fff; 
-            display: none; 
-        }
-
-        /* Bouton mobile pour ouvrir le menu */
-        #mobile-menu-toggle {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-            z-index: 2000;
-            background: var(--intersport-blue);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: 900;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        @media (max-width: 480px) {
-            #mobile-menu-toggle { display: block; }
-        }
-
-        /* --- LOADING SCREEN --- */
-        #loading-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff;
-            display: flex; justify-content: center; align-items: center;
-            z-index: 9999; flex-direction: column;
-            transition: opacity 0.8s ease;
-        }
-
-        .loader-ring {
-            width: 60px; height: 60px;
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid var(--isostar-yellow);
-            border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--isostar-yellow); }
-
+        /* --- NAVIGATION TIPS --- */
+        .nav-tips { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); padding: 10px 25px; border-radius: 50px; color: #fff; font-size: 11px; z-index: 50; backdrop-filter: blur(10px); pointer-events: none; border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="loader-ring"></div>
-        <h2 style="color:var(--intersport-blue); text-transform:uppercase; font-size:18px;">Simulation de Merchandising</h2>
-        <p style="color:#64748b; font-weight:600; margin-top:5px;">Remplissage massif des étagères Isostar...</p>
+    <div id="master-loader">
+        <div class="spinner"></div>
+        <h2 style="color:var(--inter-blue); margin:20px 0 5px 0; font-weight:900;">ISOSTAR MERCHANDISING</h2>
+        <p style="color:#64748b; font-weight:600; font-size:14px;">Génération du planogramme 3D sans vide...</p>
+        <div class="loading-bar-container"><div class="loading-bar-fill"></div></div>
     </div>
 
-    <div id="ui-left">
-        <h1 class="brand-title">ISOSTAR 3D</h1>
-        <span class="project-tag">Planogramme National v8.0</span>
-        
-        <label>Configuration du Magasin</label>
-        <select id="select-store-size">
-            <option value="s1">1. Format Proximité (Petit Rack)</option>
-            <option value="s2">2. Station-Service (TG Etroite)</option>
-            <option value="s3" selected>3. Supermarché (1 Elément Standard)</option>
-            <option value="s4">4. Supermarché (2 Eléments - 2M66)</option>
-            <option value="s5">5. Hypermarché (3 Eléments - 4M00)</option>
-            <option value="s6">6. Flagship Géant (4 Eléments - 5M33)</option>
-        </select>
+    <div id="viewport-3d"></div>
 
-        <div id="product-nav-header">📦 Navigation Produits</div>
-        <div id="scrollable-catalog">
+    <nav id="ui-left-panel">
+        <div class="ui-header">
+            <h1 class="ui-title">ISOSTAR 3D</h1>
+            <span class="ui-version">Planogramme National v9.0</span>
+        </div>
+
+        <div class="ui-controls">
+            <label>Format du Point de Vente</label>
+            <select id="select-store-type">
+                <option value="s1">1. Proximité (Petit Rack 2M)</option>
+                <option value="s2">2. Station-Service (TG 3.5M)</option>
+                <option value="s3" selected>3. Supermarché (Standard 6M)</option>
+                <option value="s4">4. Supermarché Large (10M)</option>
+                <option value="s5">5. Hypermarché (Géant 15M)</option>
+                <option value="s6">6. Flagship / Showroom (22M)</option>
+            </select>
+        </div>
+
+        <div id="catalog-scroll-area">
+            <div class="catalog-header-text">📦 Catalogue Officiel (14)</div>
+            <div id="nav-list-injection"></div>
+        </div>
+
+        <div style="padding: 20px 30px; background: #f1f5f9; border-radius: 0 0 var(--radius-xl) var(--radius-xl); text-align: center;">
+            <p style="font-size: 10px; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase;">Algorithme Looping "Zero-Void" Activé</p>
+        </div>
+    </nav>
+
+    <aside id="ui-product-modal">
+        <div class="modal-content">
+            <div class="pill-cat" id="display-cat">Catégorie</div>
+            <h2 class="prod-name" id="display-name">Produit Isostar</h2>
+            <p class="prod-description" id="display-desc">Détails techniques du produit.</p>
+            
+            <div class="merch-theory-card">
+                <div style="font-size:12px; font-weight:900; color:#d4a017; margin-bottom:12px; text-transform:uppercase; display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:18px;">🎯</span> Justification Merchandising
+                </div>
+                <div id="display-merch" style="font-size:14px; font-style:italic; color:#475569; line-height:1.6;">Analyse du placement stratégique.</div>
             </div>
 
-        <div style="margin-top:15px; font-size:11px; color:#94a3b8; background:#f8fafc; padding:12px; border-radius:10px; line-height:1.4; border: 1px solid #e2e8f0;">
-            <b>GUIDE DE NAVIGATION :</b><br>
-            • Rotation : Clic Gauche<br>
-            • Translation : Clic Droit<br>
-            • Zoom : Molette ou Pincer
+            <button id="btn-camera-free" class="btn-system" onclick="handleCameraRelease()">🔓 LIBÉRER LA CAMÉRA (RETOUR)</button>
         </div>
-    </div>
+    </aside>
 
-    <div id="info-panel-right">
-        <div class="badge-cat" id="product-cat-label">Catégorie</div>
-        <h2 id="panel-product-title">Nom du Produit</h2>
-        <p id="panel-product-desc">Description commerciale du produit Isostar.</p>
-        
-        <div class="merch-analysis-box">
-            <p class="merch-header">📊 Analyse du Merchandiser</p>
-            <p id="panel-product-merch" style="margin:0; font-size:13px; font-style:italic; color:#374151; line-height:1.6;"></p>
-        </div>
-        
-        <button id="reset-cam-trigger" class="btn-ui" onclick="handleCameraReset()">🔄 LIBÉRER LA CAMÉRA (RETOUR)</button>
-    </div>
-
-    <button id="mobile-menu-toggle" onclick="toggleMobileMenu()">MENU CATALOGUE</button>
+    <div class="nav-tips">🖱️ Rotation (Clic G) | ↕️ Zoom (Molette) | ↔️ Déplacement (Clic D)</div>
 
     <script type="importmap">
         {
@@ -367,162 +182,169 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        /* ========================================================================
-           1. DATA : CATALOGUE OFFICIEL (14 PRODUITS)
-           VÉRIFICATION DES TERMES EXACTS 
-           VÉRIFICATION DES NOMS DE FICHIERS JPG
-           ======================================================================== */
-        
-        const FULL_CATALOG = [
+        /* =======================================================================
+           1. CORE DATA : CATALOGUE OFFICIEL (14 TERMES EXACTS)
+           VÉRIFICATION DES FICHIERS JPG
+           =======================================================================
+        */
+        const ISOSTAR_MASTER_DATA = [
             { 
-                id: 0, img: 'pastille effervecense.jpg', shape: 'cylinder', scale: [0.14, 0.45, 0.14], width: 0.17, facing: 4, 
+                id: 0, img: 'pastille effervecense.jpg', shape: 'cylinder', scale: [0.14, 0.45, 0.14], width: 0.18, facing: 4, 
                 name: "Pastilles Effervescentes Électrolytes", cat: "HYDRATATION", color: 0xffde00, 
-                desc: "Formule isotonique sans calorie. Idéal pour optimiser l'hydratation lors d'efforts courts ou en complément d'un apport glucidique séparé.",
-                merch: "PLACEMENT HAUT (Yeux). Produit d'impulsion stratégique. Sa forte visibilité en haut du rayon attire le regard dès l'entrée en linéaire." 
+                desc: "Pastilles riches en Sodium, Magnésium et Potassium pour une hydratation ciblée sans apport calorique élevé. Format tube pratique pour le transport.",
+                merch: "HAUT DE RAYON (Niveau des yeux). Produit d'impulsion stratégique. Sa forte visibilité en étagère haute génère des ventes complémentaires lors de l'achat d'une boisson." 
             },
             { 
-                id: 1, img: 'gel energy booster.jpg', shape: 'box', scale: [0.22, 0.35, 0.08], width: 0.24, facing: 5, 
+                id: 1, img: 'gel energy booster.jpg', shape: 'box', scale: [0.22, 0.35, 0.08], width: 0.25, facing: 5, 
                 name: "Gel Energy Booster", cat: "ÉNERGIE INSTANTANÉE", color: 0xffffff, 
-                desc: "Gel concentré coup de fouet enrichi en caféine et vitamines B1, B2, B6 et PP pour les moments les plus intenses de la compétition.",
-                merch: "NIVEAU SUPÉRIEUR. Produit technique à forte valeur ajoutée. Un facing de 5 unités garantit un bloc visuel cohérent et massif." 
+                desc: "Gel concentré apportant un coup de fouet immédiat grâce à sa teneur en glucides et vitamines B1. Indispensable pour les fins de parcours difficiles.",
+                merch: "ZONE SUPÉRIEURE. Produit technique à haute valeur faciale. Le regroupement en bloc massif rassure le consommateur sur l'expertise de la marque." 
             },
             { 
-                id: 2, img: 'gel endurance longue distance.jpg', shape: 'box', scale: [0.22, 0.30, 0.05], width: 0.24, facing: 5, 
+                id: 2, img: 'gel endurance longue distance.jpg', shape: 'box', scale: [0.22, 0.30, 0.05], width: 0.25, facing: 5, 
                 name: "Gel Endurance Longue Distance", cat: "ENDURANCE", color: 0xc0c0c0, 
-                desc: "Assimilation progressive des glucides pour les efforts de longue durée (> 2 heures). Réduit la fatigue et maintient la glycémie.",
-                merch: "PÔLE PERFORMANCE. Regroupé avec les boosters pour créer un univers technique. Sa couleur argentée tranche avec le jaune classique." 
+                desc: "Formule spécifiquement étudiée pour les efforts supérieurs à 2 heures. Diffusion progressive de l'énergie pour éviter les pics glycémiques.",
+                merch: "SEGMENTATION TECHNIQUE. Placé à la suite des gels boosters pour guider le consommateur expert vers une solution adaptée à sa pratique (Marathon, Trail)." 
             },
             { 
-                id: 3, img: 'poudre fast idratation.jpg', shape: 'cylinder', scale: [0.25, 0.48, 0.25], width: 0.29, facing: 3, 
-                name: "Poudre Fast Hydration", cat: "HYDRATATION PRÉPARATION", color: 0xffde00, 
-                desc: "Le format pot incontournable pour préparer ses boissons avant l'effort. Isotonie parfaite pour une absorption rapide de l'eau.",
-                merch: "ZONE HAUTE. Format pot iconique d'Isostar. Installe l'identité de marque dès le premier niveau d'étagère pour rassurer le client." 
+                id: 3, img: 'poudre fast idratation.jpg', shape: 'cylinder', scale: [0.25, 0.48, 0.25], width: 0.32, facing: 3, 
+                name: "Poudre Fast Hydration", cat: "HYDRATATION", color: 0xffde00, 
+                desc: "Préparation pour boisson isotonique en format pot économique. Permet de préparer jusqu'à 10 litres de boisson de l'effort.",
+                merch: "NIVEAU SUPÉRIEUR. Le format pot potelant asseoit l'identité de marque Isostar sur le linéaire haut. Sert d'ancrage visuel majeur." 
             },
             { 
-                id: 4, img: 'poudre hydrate perform.jpg', shape: 'cylinder', scale: [0.25, 0.48, 0.25], width: 0.29, facing: 3, 
-                name: "Poudre Hydrate & Perform", cat: "PERFORMANCE ÉLITE", color: 0xffde00, 
-                desc: "Référence historique du sport d'endurance. Utilisé par les marathoniens et triathlètes pour le maintien de l'équilibre minéral.",
-                merch: "CŒUR DE GAMME. Placé stratégiquement pour stabiliser le regard du client sur la marque. Pilier visuel central du planogramme." 
+                id: 4, img: 'poudre hydrate perform.jpg', shape: 'cylinder', scale: [0.25, 0.48, 0.25], width: 0.32, facing: 3, 
+                name: "Poudre Hydrate & Perform", cat: "PERFORMANCE", color: 0xffde00, 
+                desc: "La référence historique Isostar pour tous les sportifs. Électrolytes et glucides combinés pour une performance durable.",
+                merch: "PILIER DE GAMME. Placé au centre de la zone supérieure pour stabiliser le flux visuel du client et ancrer le 'jaune Isostar' dans l'esprit du shopper." 
             },
             { 
-                id: 5, img: 'barre endurance max.jpg', shape: 'box', scale: [0.45, 0.15, 0.25], width: 0.47, facing: 3, 
+                id: 5, img: 'barre endurance max.jpg', shape: 'box', scale: [0.45, 0.15, 0.25], width: 0.48, facing: 3, 
                 name: "Barre Endurance Max", cat: "SNACKING SPORTIF", color: 0xffde00, 
-                desc: "Barre de céréales énergétique riche en glucides complexes. Texture fondante et digestion facile pour une énergie longue durée.",
-                merch: "ZONE DORÉE (Mains). Produit à très forte rotation (20/80). Doit être attrapé instinctivement sans aucune difficulté d'accès." 
+                desc: "Barre de céréales énergétique riche en glucides complexes et vitamines. Texture fondante et gourmande pour un plaisir soutenu.",
+                merch: "ZONE DORÉE (Niveau des mains). Produit coeur de marché (loi des 20/80). Sa position centrale facilite la saisie immédiate par le client." 
             },
             { 
-                id: 6, img: 'barre energie chocolat.jpg', shape: 'box', scale: [0.45, 0.15, 0.25], width: 0.47, facing: 3, 
-                name: "Barre Énergie Chocolat", cat: "SNACKING PLAISIR", color: 0x3d2315, 
-                desc: "Le best-seller absolu. Gourmandise et efficacité énergétique. Apport glucidique optimal couplé au croquant du chocolat au lait.",
-                merch: "ÉPICENTRE DU RAYON. C'est le produit générateur de trafic. Doit occuper la position la plus centrale et visible du meuble entier." 
+                id: 6, img: 'barre energie chocolat.jpg', shape: 'box', scale: [0.45, 0.15, 0.25], width: 0.48, facing: 3, 
+                name: "Barre Énergie Chocolat", cat: "SNACKING SPORTIF", color: 0x3d2315, 
+                desc: "Le best-seller mondial. Apport glucidique optimal couplé au plaisir du chocolat croquant pour maintenir le moral pendant l'effort.",
+                merch: "ÉPICENTRE DU RAYON. C'est le produit générateur de trafic. Doit occuper le centre visuel du meuble pour attirer le client dès son entrée dans l'allée." 
             },
             { 
-                id: 7, img: 'barre energie fruit rouge.jpg', shape: 'box', scale: [0.45, 0.15, 0.25], width: 0.47, facing: 3, 
-                name: "Barre Énergie Fruits Rouges", cat: "SNACKING FRUITÉ", color: 0xce0f2d, 
-                desc: "Alternative fruitée riche en vitamines C et E. Parfait pour varier les apports lors des sorties de vélo ou de randonnée.",
-                merch: "OFFRE COMPLÉMENTAIRE. Placé à droite du chocolat (sens de lecture) pour inciter à l'achat multiple et à la découverte de saveur." 
+                id: 7, img: 'barre energie fruit rouge.jpg', shape: 'box', scale: [0.45, 0.15, 0.25], width: 0.48, facing: 3, 
+                name: "Barre Énergie Fruits Rouges", cat: "SNACKING SPORTIF", color: 0xce0f2d, 
+                desc: "Alternative fruitée riche en antioxydants et vitamines. Parfait pour éviter la saturation du goût chocolat sur les efforts longs.",
+                merch: "EXTENSION DE GAMME. Placé à droite du chocolat (sens de lecture) pour inciter à l'achat multiple de saveurs différentes." 
             },
             { 
-                id: 8, img: 'protein bar caramel.jpg', shape: 'box', scale: [0.35, 0.25, 0.25], width: 0.37, facing: 4, 
-                name: "Protein Bar Caramel", cat: "RÉCUPÉRATION MUSCULAIRE", color: 0x00aae4, 
-                desc: "Barre post-effort riche en protéines pour favoriser la régénération des fibres musculaires après une séance de musculation ou de cardio.",
-                merch: "ZONE DE RUPTURE VISUELLE. Le passage au bleu ciel signale clairement le changement d'usage du produit vers la phase post-effort." 
+                id: 8, img: 'protein bar caramel.jpg', shape: 'box', scale: [0.35, 0.25, 0.25], width: 0.38, facing: 4, 
+                name: "Protein Bar Caramel", cat: "RÉCUPÉRATION", color: 0x00aae4, 
+                desc: "Barre post-effort riche en protéines pour favoriser la régénération des tissus musculaires après une séance intensive.",
+                merch: "ZONE DE RUPTURE. Le passage au code couleur bleu ciel signale clairement le changement d'usage du produit (Énergie vers Récupération)." 
             },
             { 
-                id: 9, img: 'protein barre cruch.jpg', shape: 'box', scale: [0.35, 0.25, 0.25], width: 0.37, facing: 4, 
-                name: "Protein Bar Crunch", cat: "RÉCUPÉRATION NUTRITION", color: 0x00aae4, 
-                desc: "Le plaisir de la récupération. Texture croustillante unique et apport élevé en protéines pour une reconstruction optimale.",
-                merch: "SEGMENT RÉCUPÉRATION. Placé en fin de bloc barres. Sert de transition vers les boissons de construction protéinées situées en bas." 
+                id: 9, img: 'protein barre cruch.jpg', shape: 'box', scale: [0.35, 0.25, 0.25], width: 0.38, facing: 4, 
+                name: "Protein Bar Crunch", cat: "RÉCUPÉRATION", color: 0x00aae4, 
+                desc: "Barre haute teneur en protéines avec une texture croustillante unique. Un plaisir nutritionnel pour récompenser l'effort.",
+                merch: "SEGMENTATION RÉCUPÉRATION. Placé en fin de bloc barres avant de descendre vers les boissons de construction musculaire." 
             },
             { 
-                id: 10, img: 'Hydrate perform citron.jpg', shape: 'cylinder', scale: [0.18, 0.65, 0.18], width: 0.21, facing: 6, 
+                id: 10, img: 'Hydrate perform citron.jpg', shape: 'cylinder', scale: [0.18, 0.65, 0.18], width: 0.22, facing: 6, 
                 name: "Hydrate & Perform Citron", cat: "READY-TO-DRINK", color: 0xffde00, 
-                desc: "Boisson isotonique prête à boire 500ml. Bouchon sport ergonomique pour s'hydrater sans s'arrêter. Isotonie immédiate.",
-                merch: "NIVEAU BAS (Genoux). Produit dynamique. Le facing massif de 6 unités crée un impact coloré fort pour attirer les sportifs pressés." 
+                desc: "Boisson isotonique prête à boire 500ml. Format dynamique avec bouchon sport ergonomique pour s'hydrater sans s'arrêter.",
+                merch: "NIVEAU BAS (Mains/Genoux). Produit dynamique pour sportifs pressés. Placé en bloc massif pour créer un 'mur' de fraîcheur attirant." 
             },
             { 
-                id: 11, img: 'Hydrate perform orange.jpg', shape: 'cylinder', scale: [0.18, 0.65, 0.18], width: 0.21, facing: 6, 
+                id: 11, img: 'Hydrate perform orange.jpg', shape: 'cylinder', scale: [0.18, 0.65, 0.18], width: 0.22, facing: 6, 
                 name: "Hydrate & Perform Orange", cat: "READY-TO-DRINK", color: 0xffde00, 
-                desc: "Version orange de la célèbre boisson isotonique. Goût frais et apport immédiat en minéraux perdus lors de la transpiration.",
-                merch: "ORIENTATION CLIENT. Toutes les étiquettes sont pivotées à 180° pour présenter le logo Isostar face au client dès le premier coup d'œil." 
+                desc: "La version orange du célèbre Ready-To-Drink Isostar. Isotonie parfaite pour une absorption gastrique rapide et efficace.",
+                merch: "ORIENTATION CLIENT. Toutes les bouteilles sont pivotées à 180° pour présenter le logo face au client dès le début de l'allée." 
             },
             { 
                 id: 12, img: 'recovery drink vanille.jpg', shape: 'box', scale: [0.38, 0.58, 0.18], width: 0.42, facing: 3, 
                 name: "Recovery Drink Vanille", cat: "CONSTRUCTION MUSCULAIRE", color: 0x111111, 
-                desc: "Boisson de récupération en poudre haute teneur protéique. Aide à la reconstruction des tissus après des chocs traumatiques.",
-                merch: "NIVEAU SOL (Destination). Produit lourd et technique. Le client cible accepte l'effort de se baisser pour ce format spécifique." 
+                desc: "Boisson de récupération en poudre riche en protéines. Aide à réduire la fatigue et répare les fibres après des chocs traumatiques.",
+                merch: "NIVEAU SOL (Destination). Produit lourd et technique. Le client cible (expert) accepte de se baisser pour ce format spécifique." 
             },
             { 
                 id: 13, img: 'recovery drink chocolat.jpg', shape: 'box', scale: [0.38, 0.58, 0.18], width: 0.42, facing: 3, 
-                name: "Recovery Drink Chocolat", cat: "RÉCUPÉRATION PERFORMANCE", color: 0x111111, 
-                desc: "Solution de récupération complète post-séance intense. Mélange optimal de glucides et protéines pour refaire les stocks d'énergie.",
-                merch: "FONDATION DU LINÉAIRE. Les gros volumes en partie basse stabilisent visuellement le planogramme et asseoient la puissance de marque." 
+                name: "Recovery Drink Chocolat", cat: "RÉCUPÉRATION GLOBALE", color: 0x111111, 
+                desc: "La solution ultime après la séance. Mélange optimal de glucides et protéines pour une recharge glycogénique et musculaire.",
+                merch: "FONDATION DU RAYON. Les gros volumes en bas stabilisent la structure visuelle et la balance du meuble Intersport." 
             },
         ];
 
-        /* ========================================================================
-           2. FORMATS DES MAGASINS : LOGIQUE DE SCÈNE
-           ======================================================================== */
-        const STORE_MODELS = {
-            s1: { width: 3.0, shelves: 4, cam: 8.5 }, 
-            s2: { width: 4.5, shelves: 4, cam: 10.5 },
-            s3: { width: 6.5, shelves: 5, cam: 13.0 }, // Elément Standard 1M33 (Remplissage massif)
-            s4: { width: 10.0, shelves: 5, cam: 16.5 },
-            s5: { width: 14.5, shelves: 6, cam: 22.0 },
-            s6: { width: 20.0, shelves: 6, cam: 30.0 } // Format Flagship Géant
+        /* =======================================================================
+           2. WORLD CONFIGURATION : FORMATS MAGASINS
+           =======================================================================
+        */
+        const STORE_FORMATS = {
+            s1: { width: 3.2, shelves: 4, cam: 9, label: "Proximité" }, 
+            s2: { width: 4.8, shelves: 4, cam: 11, label: "Station-Service" },
+            s3: { width: 7.2, shelves: 5, cam: 15, label: "Supermarché Urbain" }, // Standard
+            s4: { width: 10.5, shelves: 5, cam: 19, label: "Super Standard" },
+            s5: { width: 16.0, shelves: 6, cam: 25, label: "Hypermarché" },
+            s6: { width: 24.0, shelves: 6, cam: 35, label: "Flagship Géant" }
         };
 
-        /* ========================================================================
-           3. VARIABLES GLOBALES ET INITIALISATION DU MOTEUR
-           ======================================================================== */
+        /* =======================================================================
+           3. ENGINE VARIABLES & SCENE SETUP
+           =======================================================================
+        */
         let scene, camera, renderer, controls, raycaster, mouse;
         let gondolaGroup, textureLoader;
-        let isFocus = false;
-        let isResetting = false;
+        let isFocusActive = false;
+        let isResettingCamera = false;
         
-        let startCameraPosition = new THREE.Vector3();
-        let currentTargetPosition = new THREE.Vector3(0, 1.8, 0);
-        let activeZoomCamPos = new THREE.Vector3();
-        let activeZoomTarget = new THREE.Vector3();
+        // Positions cibles pour les transitions de caméra
+        let homeCamPosition = new THREE.Vector3();
+        let homeTargetPosition = new THREE.Vector3(0, 2, 0);
+        let targetCamPos = new THREE.Vector3();
+        let targetLookAt = new THREE.Vector3();
 
-        function bootstrap() {
-            // Création de l'environnement 3D
+        function initPlanogramApp() {
+            // Création de la scène
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xf2f5f8);
-            scene.fog = new THREE.Fog(0xf2f5f8, 25, 110);
+            scene.fog = new THREE.Fog(0xf2f5f8, 20, 150);
 
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
             
-            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, powerPreference: "high-performance" });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.outputColorSpace = THREE.SRGBColorSpace;
-            document.body.appendChild(renderer.domElement);
+            document.getElementById('viewport-3d').appendChild(renderer.domElement);
 
-            // Éclairage type "Point de Vente"
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            // Éclairage type "Grande Surface"
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
             scene.add(ambientLight);
-            const spotLight = new THREE.DirectionalLight(0xffffff, 1.4);
-            spotLight.position.set(15, 30, 20);
-            spotLight.castShadow = true;
-            spotLight.shadow.mapSize.set(4096, 4096);
-            scene.add(spotLight);
+            
+            const sunlight = new THREE.DirectionalLight(0xffffff, 1.4);
+            sunlight.position.set(15, 30, 20);
+            sunlight.castShadow = true;
+            sunlight.shadow.mapSize.set(4096, 4096);
+            sunlight.shadow.camera.left = -50; sunlight.shadow.camera.right = 50;
+            sunlight.shadow.camera.top = 50; sunlight.shadow.camera.bottom = -50;
+            scene.add(sunlight);
 
-            // Sol Réfléchissant (Simulation Béton Poli)
+            // Sol de Magasin
             const groundPlate = new THREE.Mesh(
-                new THREE.PlaneGeometry(400, 400), 
-                new THREE.MeshStandardMaterial({ color: 0xdce2e8, roughness: 0.38, metalness: 0.12 })
+                new THREE.PlaneGeometry(500, 500), 
+                new THREE.MeshStandardMaterial({ color: 0xdce2e8, roughness: 0.35, metalness: 0.15 })
             );
             groundPlate.rotation.x = -Math.PI / 2;
             groundPlate.receiveShadow = true;
             scene.add(groundPlate);
 
-            // Contrôles de la caméra
+            // Système de Contrôles Orbitaux
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.dampingFactor = 0.065;
+            controls.dampingFactor = 0.06;
             controls.maxPolarAngle = Math.PI / 2 - 0.05;
+            controls.screenSpacePanning = true;
 
             gondolaGroup = new THREE.Group();
             scene.add(gondolaGroup);
@@ -531,259 +353,254 @@
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
 
-            // Événements du cycle de vie
-            window.addEventListener('resize', handleWindowResize);
-            window.addEventListener('mousedown', processInteraction);
-            document.getElementById('select-store-size').addEventListener('change', (e) => switchStoreLayout(e.target.value));
+            // Écouteurs d'événements
+            window.addEventListener('resize', handleResponsiveUI);
+            window.addEventListener('mousedown', onWorldInteraction);
+            document.getElementById('select-store-type').addEventListener('change', (e) => executeStoreRebuild(e.target.value));
             
-            // Initialisation de la navigation mobile et desktop
-            renderCatalogSidebar();
+            // Initialisation des menus
+            injectCatalogItems();
             
-            // Chargement du premier planogramme
-            switchStoreLayout('s3');
+            // Construction initiale
+            executeStoreRebuild('s3');
             
-            // Masquage de l'écran de chargement
-            setTimeout(() => { document.getElementById('loading-overlay').style.opacity = 0; }, 1500);
-            setTimeout(() => { document.getElementById('loading-overlay').remove(); }, 2200);
+            // Sortie du Loader
+            setTimeout(() => { 
+                document.getElementById('master-loader').style.opacity = 0;
+                setTimeout(() => document.getElementById('master-loader').remove(), 1000);
+            }, 1800);
 
-            renderFrame();
+            runMainLoop();
         }
 
-        /* ========================================================================
-           4. ALGORITHME DE REMPLISSAGE MASSIF "ZERO-VOID"
-           ======================================================================== */
-
-        function switchStoreLayout(layoutKey) {
-            // Destruction de la structure précédente
+        /* =======================================================================
+           4. "ZERO-VOID" ALGORITHM : REMPLISSAGE INTÉGRAL
+           =======================================================================
+        */
+        function executeStoreRebuild(formatKey) {
+            // Nettoyage de la scène
             while(gondolaGroup.children.length > 0) gondolaGroup.remove(gondolaGroup.children[0]);
             
-            const storeConfig = STORE_MODELS[layoutKey];
-            startCameraPosition.set(0, 2.5, storeConfig.cam);
+            const storeConfig = STORE_FORMATS[formatKey];
+            homeCamPosition.set(0, 3, storeConfig.cam);
             
-            if(!isFocus) {
-                camera.position.copy(startCameraPosition);
-                controls.target.copy(currentTargetPosition);
+            // Si l'utilisateur n'est pas en train d'analyser un produit, on place la caméra au point HOME
+            if(!isFocusActive) {
+                camera.position.copy(homeCamPosition);
+                controls.target.copy(homeTargetPosition);
             }
 
-            assemblePlanogram(storeConfig);
+            deployFurniture(storeConfig);
         }
 
-        function assemblePlanogram(config) {
-            const hGap = 0.95;
-            const shelfDepth = 0.85;
-            const hMax = config.shelves * hGap;
+        function deployFurniture(cfg) {
+            const shelfStep = 0.95;
+            const depth = 0.85;
+            const totalHeight = cfg.shelves * shelfStep;
             
-            // --- MOBILIER DE PRÉSENTATION ---
-            const woodMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.28 });
+            // -- FOND DU MEUBLE --
             const backPanel = new THREE.Mesh(
-                new THREE.BoxGeometry(config.width + 0.35, hMax + 0.9, 0.15),
-                woodMat
+                new THREE.BoxGeometry(cfg.width + 0.4, totalHeight + 1.2, 0.15),
+                new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 })
             );
-            backPanel.position.set(0, hMax/2 + 0.35, -0.48);
+            backPanel.position.set(0, totalHeight/2 + 0.4, -0.48);
             backPanel.receiveShadow = true;
             gondolaGroup.add(backPanel);
 
-            // Plinthe technique (Bas du meuble)
-            const basePlinth = new THREE.Mesh(
-                new THREE.BoxGeometry(config.width + 0.35, 0.4, shelfDepth + 0.12),
-                new THREE.MeshStandardMaterial({ color: 0x1c1c1c })
+            // -- PLINTHE BASSE --
+            const kickboard = new THREE.Mesh(
+                new THREE.BoxGeometry(cfg.width + 0.4, 0.45, depth + 0.1),
+                new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
             );
-            basePlinth.position.set(0, 0.2, 0);
-            gondolaGroup.add(basePlinth);
+            kickboard.position.set(0, 0.22, 0);
+            gondolaGroup.add(kickboard);
 
-            // Fronton Identitaire (Header Intersport)
-            const blueBanner = new THREE.Mesh(
-                new THREE.BoxGeometry(config.width, 0.65, 0.28),
+            // -- FRONTON BLEU INTERSPORT --
+            const banner = new THREE.Mesh(
+                new THREE.BoxGeometry(cfg.width, 0.75, 0.25),
                 new THREE.MeshStandardMaterial({ color: 0x004179 })
             );
-            blueBanner.position.set(0, hMax + 0.85, 0);
-            gondolaGroup.add(blueBanner);
+            banner.position.set(0, totalHeight + 0.9, 0);
+            gondolaGroup.add(banner);
 
-            // --- GÉNÉRATION ÉTAGÈRES ET REMPLISSAGE INTÉGRAL ---
-            for(let i=0; i < config.shelves; i++) {
-                const yLevel = 0.5 + (i * hGap);
+            // -- RÉPÉTITION DES ÉTAGÈRES ET REMPLISSAGE SANS VIDE --
+            for(let i=0; i < cfg.shelves; i++) {
+                const yPos = 0.6 + (i * shelfStep);
                 
-                const shelfBoard = new THREE.Mesh(
-                    new THREE.BoxGeometry(config.width, 0.06, shelfDepth),
-                    new THREE.MeshStandardMaterial({ color: 0xffffff })
+                // Tablette en acier laqué blanc
+                const shelfMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+                const shelfMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(cfg.width, 0.07, depth),
+                    shelfMat
                 );
-                shelfBoard.position.set(0, yLevel - 0.03, 0);
-                shelfBoard.receiveShadow = true; shelfBoard.castShadow = true;
-                gondolaGroup.add(shelfBoard);
+                shelfMesh.position.set(0, yPos - 0.035, 0);
+                shelfMesh.receiveShadow = true; shelfMesh.castShadow = true;
+                gondolaGroup.add(shelfMesh);
 
-                // Porte-étiquette Rouge (Rail de prix)
-                const priceRail = new THREE.Mesh(
-                    new THREE.BoxGeometry(config.width, 0.085, 0.02),
+                // Porte-Prix Rouge
+                const rail = new THREE.Mesh(
+                    new THREE.BoxGeometry(cfg.width, 0.08, 0.02),
                     new THREE.MeshBasicMaterial({ color: 0xce0f2d })
                 );
-                priceRail.position.set(0, yLevel - 0.045, shelfDepth/2 + 0.015);
-                gondolaGroup.add(priceRail);
+                rail.position.set(0, yPos - 0.045, depth/2 + 0.01);
+                gondolaGroup.add(rail);
 
-                // --- ALGORITHME DE REMPLISSAGE MASSIF ---
-                // Définition des produits autorisés pour cet étage (Psychologie du client)
-                let shelfProducts = [];
-                if(i === 0) shelfProducts = [FULL_CATALOG[12], FULL_CATALOG[13], FULL_CATALOG[3], FULL_CATALOG[4]]; // Bas : Lourd/Destination
-                else if(i === 1) shelfProducts = [FULL_CATALOG[10], FULL_CATALOG[11]]; // Boissons dynamiques
-                else if(i === config.shelves - 1) shelfProducts = [FULL_CATALOG[0], FULL_CATALOG[1], FULL_CATALOG[2]]; // Haut : Impulsion/Technique
-                else shelfProducts = [FULL_CATALOG[5], FULL_CATALOG[6], FULL_CATALOG[7], FULL_CATALOG[8], FULL_CATALOG[9]]; // Milieu : Snacking/Cœur
+                // CONTENU STRATÉGIQUE (Remplissage massif par niveau)
+                let rowProds = [];
+                if(i === 0) rowProds = [ISOSTAR_MASTER_DATA[12], ISOSTAR_MASTER_DATA[13], ISOSTAR_MASTER_DATA[3], ISOSTAR_MASTER_DATA[4]];
+                else if(i === 1) rowProds = [ISOSTAR_MASTER_DATA[10], ISOSTAR_MASTER_DATA[11]];
+                else if(i === cfg.shelves - 1) rowProds = [ISOSTAR_MASTER_DATA[0], ISOSTAR_MASTER_DATA[1], ISOSTAR_MASTER_DATA[2]];
+                else rowProds = [ISOSTAR_MASTER_DATA[5], ISOSTAR_MASTER_DATA[6], ISOSTAR_MASTER_DATA[7], ISOSTAR_MASTER_DATA[8], ISOSTAR_MASTER_DATA[9]];
 
-                runZeroVoidAlgorithm(config.width, yLevel, shelfProducts);
+                performMassFilling(cfg.width, yPos, rowProds);
             }
         }
 
-        function runZeroVoidAlgorithm(linearWidth, yPos, productSelection) {
-            let cursorX = -linearWidth / 2 + 0.18; // Offset initial gauche
-            let selectionIndex = 0;
+        function performMassFilling(maxWidth, y, set) {
+            let cursorX = -maxWidth / 2 + 0.15; // Marge gauche de départ
+            let idx = 0;
 
-            // Boucle infinie de remplissage jusqu'à saturation de la largeur
-            while(cursorX < linearWidth / 2 - 0.28) {
-                const activeProd = productSelection[selectionIndex % productSelection.length];
+            // Boucle de remplissage infinie jusqu'au bord droit du meuble
+            while(cursorX < maxWidth / 2 - 0.25) {
+                const targetData = set[idx % set.length];
                 
-                // Pose du bloc de facings complet
-                for(let f=0; f < activeProd.facing; f++) {
-                    // Sécurité de débordement droit
-                    if(cursorX + activeProd.width > linearWidth / 2 - 0.12) break;
+                // On installe le bloc complet de facings défini dans la base
+                for(let f=0; f < targetData.facing; f++) {
+                    // Sécurité de collision bord droit
+                    if(cursorX + targetData.width > maxWidth / 2 - 0.1) break;
                     
-                    spawnProductInstance(activeProd, cursorX + activeProd.width/2, yPos);
-                    cursorX += activeProd.width + 0.006; // Écart millimétrique réaliste
+                    placeProduct3D(targetData, cursorX + targetData.width/2, y);
+                    cursorX += targetData.width + 0.005; // Gap réaliste entre boîtes
                 }
                 
-                cursorX += 0.14; // Espace inter-références stratégique
-                selectionIndex++;
+                cursorX += 0.18; // Espace entre deux références différentes (marques/segments)
+                idx++;
             }
         }
 
-        function spawnProductInstance(data, x, y) {
-            // Chargement de la texture JPG Haute Qualité
-            const diffuseMap = textureLoader.load(data.img);
-            diffuseMap.colorSpace = THREE.SRGBColorSpace;
-            diffuseMap.anisotropy = 16; // Netteté sous angles rasants
+        function placeProduct3D(data, x, y) {
+            // Texture haute résolution avec filtrage anisotrope
+            const texture = textureLoader.load(data.img);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 16; 
             
-            const faceMat = new THREE.MeshStandardMaterial({ map: diffuseMap, roughness: 0.42 });
-            const sideMat = new THREE.MeshStandardMaterial({ color: data.color || 0xd1d5db, roughness: 0.58 });
+            const matF = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.4 });
+            const matS = new THREE.MeshStandardMaterial({ color: data.color || 0xdddddd, roughness: 0.6 });
 
-            let finalMesh;
+            let mesh;
             if(data.shape === 'cylinder') {
-                // Cylindres : Bouteilles Citron/Orange et Poudres
-                finalMesh = new THREE.Mesh(new THREE.CylinderGeometry(data.scale[0], data.scale[0], data.scale[1], 36), faceMat);
-                // --- ROTATION CRITIQUE DESIGN (180°) ---
-                finalMesh.rotation.y = Math.PI; 
+                // Modélisation cylindrique (Bouteilles / Tubes / Poudres)
+                mesh = new THREE.Mesh(new THREE.CylinderGeometry(data.scale[0], data.scale[0], data.scale[1], 48), matF);
+                // --- CORRECTION ORIENTATION LOGO CLIENT (180°) ---
+                mesh.rotation.y = Math.PI; 
             } else {
-                // Boîtes : Barres, Gels et Recovery
-                // Face n°4 = Devant
-                finalMesh = new THREE.Mesh(
+                // Modélisation boîte (Barres / Gels / Récupération)
+                // Mapping : 4 = Frontale
+                mesh = new THREE.Mesh(
                     new THREE.BoxGeometry(data.scale[0], data.scale[1], data.scale[2]),
-                    [sideMat, sideMat, sideMat, sideMat, faceMat, sideMat]
+                    [matS, matS, matS, matS, matF, matS]
                 );
             }
             
-            finalMesh.position.set(x, y + data.scale[1]/2 + 0.02, 0);
-            finalMesh.castShadow = true;
-            finalMesh.receiveShadow = true;
-            finalMesh.userData = data; // Injection des métadonnées pour l'UI
-            gondolaGroup.add(finalMesh);
+            mesh.position.set(x, y + data.scale[1]/2 + 0.02, 0);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.userData = data; // Injection des métadonnées
+            gondolaGroup.add(mesh);
         }
 
-        /* ========================================================================
-           5. INTERACTIVITÉ ET NAVIGATION
-           ======================================================================== */
-
-        function processInteraction(event) {
-            if(event.target.closest('#ui-left') || event.target.closest('#info-panel-right')) return;
+        /* =======================================================================
+           5. INTERACTION & CAMERA RESET SYSTEM
+           =======================================================================
+        */
+        function onWorldInteraction(e) {
+            if(e.target.closest('#ui-left-panel') || e.target.closest('#ui-product-modal')) return;
             
-            isResetting = false; // Interruption immédiate du retour automatique
+            isResettingCamera = false; // Désactivation immédiate de l'auto-home si mouvement manuel
 
-            // Détection des clics sur mobile et desktop
-            const clientX = event.clientX || (event.touches ? event.touches[0].clientX : 0);
-            const clientY = event.clientY || (event.touches ? event.touches[0].clientY : 0);
-
-            mouse.x = (clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             
             raycaster.setFromCamera(mouse, camera);
-            const intersectList = raycaster.intersectObjects(gondolaGroup.children, true);
+            const intersections = raycaster.intersectObjects(gondolaGroup.children, true);
             
-            if (intersectList.length > 0) {
-                let target = intersectList[0].object;
-                while(target.parent && !target.userData.name) target = target.parent;
-                if(target.userData.name) zoomToTargetProduct(target);
+            if (intersections.length > 0) {
+                let hit = intersections[0].object;
+                while(hit.parent && !hit.userData.name) hit = hit.parent;
+                if(hit.userData.name) launchProductFocus(hit);
             }
         }
 
-        function zoomToTargetProduct(obj) {
-            isFocus = true;
-            isResetting = false;
+        function launchProductFocus(obj) {
+            isFocusActive = true;
+            isResettingCamera = false;
             
-            const metadata = obj.userData;
-            document.getElementById('product-cat-label').innerText = metadata.cat;
-            document.getElementById('panel-product-title').innerText = metadata.name;
-            document.getElementById('panel-product-desc').innerText = metadata.desc;
-            document.getElementById('panel-product-merch').innerText = metadata.merch;
-            document.getElementById('info-panel-right').classList.add('active');
-            document.getElementById('reset-cam-trigger').style.display = 'block';
+            const meta = obj.userData;
+            document.getElementById('display-cat').innerText = meta.cat;
+            document.getElementById('display-name').innerText = meta.name;
+            document.getElementById('display-desc').innerText = meta.desc;
+            document.getElementById('display-merch').innerText = meta.merch;
+            document.getElementById('ui-product-modal').classList.add('active');
+            document.getElementById('btn-camera-free').style.display = 'block';
 
-            // Paramétrage des cibles d'interpolation
+            // Paramètres de trajectoire Camera Lerp
             const worldPos = new THREE.Vector3();
             obj.getWorldPosition(worldPos);
-            activeZoomTarget.copy(worldPos);
-            // Caméra positionnée idéalement devant l'étagère
-            activeZoomCamPos.copy(worldPos).add(new THREE.Vector3(0, 0.22, 1.45)); 
+            targetLookAt.copy(worldPos);
+            // On se place à 1.5m devant le produit
+            targetCamPos.copy(worldPos).add(new THREE.Vector3(0, 0.2, 1.5)); 
         }
 
-        window.handleCameraReset = () => {
-            isFocus = false;
-            isResetting = true; // Déclenche le lerp de retour dans renderFrame()
-            document.getElementById('info-panel-right').classList.remove('active');
-            document.getElementById('reset-cam-trigger').style.display = 'none';
+        window.handleCameraRelease = () => {
+            isFocusActive = false;
+            isResettingCamera = true; // Déclenche l'animation de retour vers le point HOME
+            document.getElementById('ui-product-modal').classList.remove('active');
+            document.getElementById('btn-camera-free').style.display = 'none';
         };
 
-        function renderCatalogSidebar() {
-            const list = document.getElementById('scrollable-catalog');
-            FULL_CATALOG.forEach(prod => {
-                const card = document.createElement('div');
-                card.className = 'nav-card';
-                card.innerHTML = `<span>${prod.name}</span>`;
-                card.onclick = () => {
-                    let mesh = null;
-                    gondolaGroup.traverse(m => { if(m.userData.name === prod.name && !mesh) mesh = m; });
-                    if(mesh) zoomToTargetProduct(mesh);
+        function injectCatalogItems() {
+            const container = document.getElementById('nav-list-injection');
+            ISOSTAR_MASTER_DATA.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'nav-item';
+                item.innerHTML = `<span>${p.name}</span>`;
+                item.onclick = () => {
+                    let target = null;
+                    gondolaGroup.traverse(m => { if(m.userData.name === p.name && !target) target = m; });
+                    if(target) launchProductFocus(target);
                 };
-                list.appendChild(card);
+                container.appendChild(item);
             });
         }
 
-        window.toggleMobileMenu = () => {
-            document.getElementById('ui-left').classList.toggle('mobile-active');
-        };
-
-        function handleWindowResize() {
+        function handleResponsiveUI() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function renderFrame() {
-            requestAnimationFrame(renderFrame);
+        function runMainLoop() {
+            requestAnimationFrame(runMainLoop);
             
-            if(isFocus) {
-                // Transition fluide vers l'objet sélectionné
-                camera.position.lerp(activeZoomCamPos, 0.1);
-                controls.target.lerp(activeZoomTarget, 0.1);
-            } else if(isResetting) {
-                // Transition fluide vers le point de base format magasin
-                camera.position.lerp(startCameraPosition, 0.1);
-                controls.target.lerp(currentTargetPosition, 0.1);
+            if(isFocusActive) {
+                // Interpolation vers le produit sélectionné
+                camera.position.lerp(targetCamPos, 0.12);
+                controls.target.lerp(targetLookAt, 0.12);
+            } else if(isResettingCamera) {
+                // Animation fluide de retour vers le point de départ du magasin
+                camera.position.lerp(homeCamPosition, 0.1);
+                controls.target.lerp(homeTargetPosition, 0.1);
                 
-                // Fin du forçage de caméra dès proximité
-                if(camera.position.distanceTo(startCameraPosition) < 0.15) isResetting = false;
+                // Fin de l'animation si on est assez proche
+                if(camera.position.distanceTo(homeCamPosition) < 0.1) isResettingCamera = false;
             }
             
             controls.update();
             renderer.render(scene, camera);
         }
 
-        // Démarrage global de l'application
-        bootstrap();
+        // DÉMARRAGE GLOBAL
+        initPlanogramApp();
     </script>
 </body>
 </html>
